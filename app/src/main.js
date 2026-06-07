@@ -30,7 +30,7 @@ const SNAPSHOT_TTL_MS = 60_000;
 const OFFICIAL_TTL_MS = 60_000;
 const OFFICIAL_LEG_DELAY_MS = 900;
 const POE2SCOUT_API = 'https://api.poe2scout.com';
-const APP_INDEX_PATH = path.join(__dirname, 'index.html');
+const APP_INDEX_PATH = path.join(__dirname, '..', 'dist', 'renderer', 'index.html');
 const APP_INDEX_URL = pathToFileURL(APP_INDEX_PATH).toString();
 const TRUSTED_EXTERNAL_HOSTS = new Set([
   'www.pathofexile.com',

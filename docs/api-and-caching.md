@@ -21,6 +21,7 @@ Sources:
 
 ## Desktop data flow
 
+- Renderer fetch state is coordinated with TanStack Query over the Electron preload IPC API.
 - POE2Scout catalog/categories/currencies: cached for 30 minutes.
 - POE2Scout snapshot pairs: cached for 60 seconds.
 - Official trade-site exchange leg checks: cached for 60 seconds per `league + have + want`.

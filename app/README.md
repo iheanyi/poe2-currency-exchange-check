@@ -19,7 +19,15 @@ npm install
 npm start
 ```
 
-Use npm for dependency installation. Do not copy `node_modules` between builds; if Electron launch files are missing or stale, run `npm install` again in this folder.
+Use npm for dependency installation. `npm start` builds the React/Vite renderer, then opens Electron. Do not copy `node_modules` between builds; if Electron launch files are missing or stale, run `npm install` again in this folder.
+
+## UI stack
+
+- React 19 + Vite renderer.
+- TanStack Query for IPC-backed data fetching, cache freshness, and mutation state.
+- Local shadcn-style UI primitives for buttons, cards, inputs, badges, and dense app layout.
+- Searchable currency typeaheads that match name, API id, and category.
+- Electron main/preload stay responsible for API calls, host queues, caching, and rate-limit backoff.
 
 ## Notes
 

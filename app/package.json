@@ -5,10 +5,26 @@
   "description": "Electron calculator for comparing any PoE2 currency route against a bridge route.",
   "main": "src/main.js",
   "scripts": {
-    "start": "electron .",
-    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js"
+    "start": "npm run build:renderer && electron .",
+    "build:renderer": "vite build",
+    "check": "node --check src/main.js && node --check src/preload.js && tsc --noEmit && npm run build:renderer"
   },
   "devDependencies": {
-    "electron": "^42.3.3"
+    "@types/node": "^25.9.1",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.2",
+    "electron": "^42.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.16"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.101.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.17.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^3.6.0"
   }
 }

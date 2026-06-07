@@ -8,7 +8,7 @@ The default example models `Perfect Exalted Orb -> Divine Orb` versus `Perfect E
 
 ## What is included
 
-- `app/` - Electron desktop app with POE2Scout catalog/snapshot refresh, optional official trade-site leg checks, manual rate overrides, and bounded best-path search.
+- `app/` - Electron desktop app with a React/Vite renderer, shadcn-style local UI primitives, TanStack Query-backed IPC data fetching, POE2Scout catalog/snapshot refresh, optional official trade-site leg checks, manual rate overrides, searchable currency typeaheads, and bounded best-path search.
 - `spreadsheet/poe2-currency-exchange-check.xlsx` - Google Sheets-ready static snapshot template.
 - `spreadsheet/google-sheets-refresh.gs` - Apps Script companion that can call POE2Scout with `UrlFetchApp`, refresh sheet tabs, and install/remove a 15-minute snapshot auto-refresh trigger.
 
@@ -26,6 +26,8 @@ Useful checks:
 npm run check
 npm audit --audit-level=low
 ```
+
+`npm start` builds the Vite renderer first, then opens Electron.
 
 ## Google Sheets quick start
 
