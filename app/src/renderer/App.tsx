@@ -65,6 +65,48 @@ function marketSource(market?: Market | null) {
   return market.marketSource === 'official-trade-listings' ? 'Official listings' : 'POE2Scout snapshot';
 }
 
+function formatDuration(ms?: number | null) {
+  const value = Number(ms);
+  if (!Number.isFinite(value) || value <= 0) return 'just now';
+  const seconds = Math.max(1, Math.round(value / 1000));
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.round(minutes / 60)}h`;
+}
+
+function marketFreshness(market?: Market | null) {
+  if (!market) {
+    return {
+      title: 'No prices loaded',
+      detail: 'Refresh snapshot or official listings'
+    };
+  }
+
+  const age = formatDuration(market.cacheAgeMs || 0);
+  const ttl = formatDuration(market.cacheTtlMs || 60_000);
+  return {
+    title: market.fromCache ? `Local copy, ${age} old` : 'Fresh price pull',
+    detail: `${marketSource(market)}. Reuses data for ${ttl}.`
+  };
+}
+
+function optimizerFreshness(data?: OptimizerData | null) {
+  if (!data) {
+    return {
+      title: 'Route search not run',
+      detail: 'Uses the same snapshot graph as prices'
+    };
+  }
+
+  const age = formatDuration(data.cacheAgeMs || 0);
+  const ttl = formatDuration(data.cacheTtlMs || 60_000);
+  return {
+    title: data.fromCache ? `Route graph copy, ${age} old` : 'Fresh route graph',
+    detail: `${data.results.length} routes from ${formatNumber(data.exploredStates || 0, 0)} states. Reuses for ${ttl}.`
+  };
+}
+
 function statusLabel(kind: StatusKind, text: string) {
   return <span className={`status-pill ${kind}`}>{text}</span>;
 }
@@ -218,17 +260,14 @@ export function App() {
 
   const busy = bootstrapQuery.isLoading || catalogMutation.isPending || officialMutation.isPending || optimizerMutation.isPending;
   const snapshotBusy = snapshotQuery.isFetching && !snapshotQuery.isLoading;
-  const sourceText = lastMarket
-    ? `${marketSource(lastMarket)} for ${lastMarket.league}`
-    : bootstrapQuery.isLoading
-      ? 'Loading POE2Scout catalog'
-      : 'Catalog ready';
-  const cacheText = lastMarket?.fromCache
-    ? `Cache ${Math.round((lastMarket.cacheAgeMs || 0) / 1000)}s`
-    : lastMarket
-      ? 'Fresh'
-      : 'No cache';
+  const priceFreshness = marketFreshness(lastMarket);
+  const routeFreshness = optimizerFreshness(optimizerData);
   const updatedText = lastMarket?.fetchedAt ? `Updated ${new Date(lastMarket.fetchedAt).toLocaleTimeString()}` : 'Not updated';
+  const catalogText = catalog
+    ? `${catalog.currencies.length} currencies across ${catalog.categories.length} groups`
+    : bootstrapQuery.isLoading
+      ? 'Loading catalog'
+      : 'No catalog';
 
   return (
     <main className="app-shell">
@@ -252,16 +291,20 @@ export function App() {
 
       <section className="market-strip">
         <div>
-          <strong>{sourceText}</strong>
-          <span>{catalog ? `${catalog.currencies.length} currencies, ${catalog.categories.length} groups` : 'No catalog'}</span>
+          <strong>Catalog</strong>
+          <span>{catalogText}</span>
         </div>
         <div>
-          <strong>{cacheText}</strong>
-          <span>{updatedText}</span>
+          <strong>{priceFreshness.title}</strong>
+          <span>{priceFreshness.detail}</span>
+        </div>
+        <div>
+          <strong>{routeFreshness.title}</strong>
+          <span>{routeFreshness.detail}</span>
         </div>
         <div>
           <strong>{route.league}</strong>
-          <span>{route.realm}</span>
+          <span>{updatedText}</span>
         </div>
       </section>
 
@@ -316,7 +359,7 @@ export function App() {
           <CardHeader>
             <div>
               <CardTitle>Prices</CardTitle>
-              <CardDescription>{cacheText}</CardDescription>
+              <CardDescription>{priceFreshness.title}</CardDescription>
             </div>
             <div className="button-row">
               <Button variant="ghost" onClick={() => setRateInputs(emptyRates)} title="Clear manual rates">
@@ -358,8 +401,10 @@ export function App() {
           maxHops={maxHops}
           maxResults={maxResults}
           pending={optimizerMutation.isPending}
+          quantity={quantityNumber}
           route={route}
           targetDigits={targetDigits}
+          targetStep={targetStepNumber}
           setAllowlist={setAllowlist}
           setMaxHops={setMaxHops}
           setMaxResults={setMaxResults}
@@ -453,8 +498,10 @@ function OptimizerCard({
   maxHops,
   maxResults,
   pending,
+  quantity,
   route,
   targetDigits,
+  targetStep,
   setAllowlist,
   setMaxHops,
   setMaxResults,
@@ -467,8 +514,10 @@ function OptimizerCard({
   maxHops: string;
   maxResults: string;
   pending: boolean;
+  quantity: number;
   route: Route;
   targetDigits: number;
+  targetStep: number;
   setAllowlist: (value: string) => void;
   setMaxHops: (value: string) => void;
   setMaxResults: (value: string) => void;
@@ -477,73 +526,123 @@ function OptimizerCard({
 }) {
   const target = data?.target || route.target;
   const source = data?.source || route.source;
+  const freshness = optimizerFreshness(data);
   const stats = data
-    ? `${data.results.length} paths, ${formatNumber(data.exploredStates || 0, 0)} states, ${formatNumber(data.graphNodeCount || 0, 0)} nodes`
-    : 'Market path search';
+    ? `${data.results.length} routes, ${formatNumber(data.graphEdgeCount || 0, 0)} prices checked`
+    : 'Find the best complete trade route';
 
   return (
-    <Card className="optimizer-card">
+    <Card className="optimizer-card route-finder-card">
       <CardHeader>
         <div>
-          <CardTitle>Best Paths</CardTitle>
+          <CardTitle>Route Finder</CardTitle>
           <CardDescription>{stats}</CardDescription>
         </div>
         <Button variant="primary" onClick={onRun} disabled={pending} title="Find best bounded paths through snapshot rates">
           <Network size={16} />
-          Optimize
+          Find Routes
         </Button>
       </CardHeader>
 
-      <div className="optimizer-controls">
-        <Field label="Max steps">
-          <Input type="number" min="1" max="5" step="1" value={maxHops} onChange={(event) => setMaxHops(event.target.value)} />
-        </Field>
-        <Field label="Results">
-          <Input type="number" min="1" max="50" step="1" value={maxResults} onChange={(event) => setMaxResults(event.target.value)} />
-        </Field>
-        <Field label="Only use these" className="wide">
-          <textarea className="input textarea" rows={2} value={allowlist} onChange={(event) => setAllowlist(event.target.value)} placeholder="currency api ids, comma or space separated" />
-        </Field>
+      <div className="route-finder-summary">
+        <Metric label="Start" value={`${formatNumber(quantity, 2)} ${shortLabel(catalog, source)}`} />
+        <Metric label="Goal" value={`${shortLabel(catalog, target)} in ${formatNumber(targetStep, targetDigits)} chunks`} />
+        <Metric label="Ranks by" value="Whole target, then leftovers" />
       </div>
 
+      <details className="optimizer-guide">
+        <summary>How to read Route Finder</summary>
+        <div className="guide-grid">
+          <div><strong>1</strong><span>It starts with your amount and searches short currency paths from I have to I want.</span></div>
+          <div><strong>2</strong><span>It floors wanted currency to your chunk size, then keeps leftover value visible.</span></div>
+          <div><strong>3</strong><span>Top routes are practical first: more whole target wins, leftover value breaks close calls.</span></div>
+        </div>
+      </details>
+
+      <details className="advanced-box">
+        <summary>Search controls</summary>
+        <div className="optimizer-controls">
+          <Field label="Max steps">
+            <Input type="number" min="1" max="5" step="1" value={maxHops} onChange={(event) => setMaxHops(event.target.value)} />
+          </Field>
+          <Field label="Results">
+            <Input type="number" min="1" max="50" step="1" value={maxResults} onChange={(event) => setMaxResults(event.target.value)} />
+          </Field>
+          <Field label="Only use these" className="wide">
+            <textarea className="input textarea" rows={2} value={allowlist} onChange={(event) => setAllowlist(event.target.value)} placeholder="currency api ids, comma or space separated" />
+          </Field>
+        </div>
+      </details>
+
       <div className="path-list">
-        {!data ? <div className="empty-state">Run Best Paths to rank possible trades.</div> : null}
+        <div className="route-freshness">
+          <strong>{freshness.title}</strong>
+          <span>{freshness.detail}</span>
+        </div>
+        {!data ? (
+          <div className="empty-state route-empty">
+            <strong>No route search yet</strong>
+            <span>Press Find Routes to compare direct, two-step, and multi-step exchanges using the current snapshot prices.</span>
+          </div>
+        ) : null}
         {data && !data.results.length ? <div className="empty-state">No path found for the selected currencies and allowlist.</div> : null}
         {data?.results.map((result, index) => {
-          const routeText = result.path.map((apiId) => shortLabel(catalog, apiId)).join(' -> ');
-          const leftover = result.leftoverAmount > 0
-            ? ` + ${formatNumber(result.leftoverAmount, 2)} ${shortLabel(catalog, result.leftoverCurrency)} left`
-            : '';
+          const leftover = result.leftoverAmount > 0;
           const liquidity = [
-            Number.isFinite(Number(result.minVolume)) ? `min volume ${formatNumber(result.minVolume, 0)}` : null,
-            Number.isFinite(Number(result.minStock)) ? `min stock ${formatNumber(result.minStock, 0)}` : null
+            Number.isFinite(Number(result.minVolume)) ? `Vol ${formatNumber(result.minVolume, 0)}` : null,
+            Number.isFinite(Number(result.minStock)) ? `Stock ${formatNumber(result.minStock, 0)}` : null
           ].filter(Boolean).join(', ') || 'liquidity unknown';
 
           return (
             <div className={`path-card ${index === 0 ? 'best' : ''}`} key={`${result.path.join('|')}-${index}`}>
-              <div className="path-title">
-                <strong>#{index + 1} {formatNumber(result.actionableTargetTotal, targetDigits)} {shortLabel(catalog, target)}{leftover}</strong>
-                <span>{result.hops} step{result.hops === 1 ? '' : 's'}</span>
-              </div>
-              <div className="path-route">{routeText}</div>
-              <div className="path-stats">
-                <span>before rounding {formatNumber(result.rawTargetTotal, 4)} {shortLabel(catalog, target)}</span>
-                <span>{formatRate(result.rawTargetPerSource)} {shortLabel(catalog, target)} / {shortLabel(catalog, source)}</span>
-                <span>{liquidity}</span>
-              </div>
-              <div className="path-legs">
-                {(result.legs || []).map((leg) => `${shortLabel(catalog, leg.from)} -> ${shortLabel(catalog, leg.to)} @ ${formatRate(leg.rate)}`).join(', ')}
-              </div>
-              {result.path.length === 3 ? (
-                <div className="path-actions">
-                  <Button variant="ghost" size="sm" onClick={() => onUseBridge(result.path[1])}>Use Bridge</Button>
+              <div className="path-card-head">
+                <div>
+                  <Badge className={index === 0 ? 'badge-good' : 'badge-neutral'}>{index === 0 ? 'Best route' : `Route ${index + 1}`}</Badge>
+                  <strong>You get {formatNumber(result.actionableTargetTotal, targetDigits)} {shortLabel(catalog, target)}</strong>
+                  <small>{leftover ? `${formatNumber(result.leftoverAmount, 2)} ${shortLabel(catalog, result.leftoverCurrency)} left over` : 'No leftover after the final trade'}</small>
                 </div>
-              ) : null}
+                <span>{result.hops} trade{result.hops === 1 ? '' : 's'}</span>
+              </div>
+
+              <RouteSteps catalog={catalog} path={result.path} />
+
+              <div className="path-metrics">
+                <Metric label="Raw target value" value={`${formatNumber(result.rawTargetTotal, 4)} ${shortLabel(catalog, target)}`} />
+                <Metric label="Per item rate" value={`${formatRate(result.rawTargetPerSource)} ${shortLabel(catalog, target)}`} />
+                <Metric label="Leftover" value={leftover ? `${formatNumber(result.leftoverAmount, 2)} ${shortLabel(catalog, result.leftoverCurrency)}` : 'None'} />
+                <Metric label="Liquidity" value={liquidity} />
+              </div>
+
+              <details className="path-legs-detail">
+                <summary>Leg prices</summary>
+                <div>{(result.legs || []).map((leg) => `${shortLabel(catalog, leg.from)} -> ${shortLabel(catalog, leg.to)} @ ${formatRate(leg.rate)}`).join(', ')}</div>
+              </details>
+
+              <div className="path-actions">
+                {result.path.length === 3 ? (
+                  <Button variant="ghost" size="sm" onClick={() => onUseBridge(result.path[1])}>Use as middle</Button>
+                ) : (
+                  <Badge className="badge-neutral">Multi-step route</Badge>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
     </Card>
+  );
+}
+
+function RouteSteps({ catalog, path }: { catalog: Catalog | null; path: string[] }) {
+  return (
+    <div className="route-steps">
+      {path.map((apiId, index) => (
+        <span className="route-step-wrap" key={`${apiId}-${index}`}>
+          <span className="route-step">{shortLabel(catalog, apiId)}</span>
+          {index < path.length - 1 ? <span className="route-arrow">to</span> : null}
+        </span>
+      ))}
+    </div>
   );
 }
 

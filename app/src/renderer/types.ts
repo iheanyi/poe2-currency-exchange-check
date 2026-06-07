@@ -110,6 +110,7 @@ export type OptimizerData = {
   target: string;
   fromCache?: boolean;
   cacheAgeMs?: number;
+  cacheTtlMs?: number;
   exploredStates?: number;
   graphNodeCount?: number;
   graphEdgeCount?: number;

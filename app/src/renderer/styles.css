@@ -57,7 +57,7 @@ button {
 .card-header,
 .header-actions,
 .button-row,
-.path-title,
+.path-card-head,
 .path-stats {
   display: flex;
 }
@@ -110,6 +110,12 @@ h1 {
   border-radius: 8px;
   padding: 12px 14px;
   background: rgba(24, 26, 22, 0.76);
+}
+
+.market-strip > div:nth-child(2),
+.market-strip > div:nth-child(3) {
+  border-color: rgba(119, 213, 220, 0.22);
+  background: rgba(28, 32, 28, 0.86);
 }
 
 .market-strip strong,
@@ -172,6 +178,9 @@ h1 {
 .route-form,
 .rate-grid,
 .optimizer-controls,
+.route-finder-summary,
+.guide-grid,
+.path-metrics,
 .comparison-grid,
 .decision-meter,
 .trade-comparison,
@@ -192,6 +201,90 @@ h1 {
 
 .optimizer-controls {
   grid-template-columns: minmax(100px, 0.25fr) minmax(100px, 0.25fr) minmax(260px, 1fr);
+}
+
+.route-finder-summary {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 17px 17px 0;
+}
+
+.optimizer-guide,
+.advanced-box {
+  margin: 12px 17px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(32, 34, 29, 0.72);
+}
+
+.optimizer-guide summary,
+.advanced-box summary,
+.path-legs-detail summary {
+  cursor: pointer;
+  list-style: none;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.optimizer-guide summary::-webkit-details-marker,
+.advanced-box summary::-webkit-details-marker,
+.path-legs-detail summary::-webkit-details-marker {
+  display: none;
+}
+
+.optimizer-guide summary,
+.advanced-box summary {
+  padding: 12px 13px;
+}
+
+.optimizer-guide summary::after,
+.advanced-box summary::after,
+.path-legs-detail summary::after {
+  content: "+";
+  float: right;
+  color: var(--muted);
+}
+
+.optimizer-guide[open] summary::after,
+.advanced-box[open] summary::after,
+.path-legs-detail[open] summary::after {
+  content: "-";
+}
+
+.guide-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  padding: 12px;
+}
+
+.guide-grid > div {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  min-width: 0;
+}
+
+.guide-grid strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(123, 216, 143, 0.14);
+  color: var(--green);
+}
+
+.guide-grid span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.42;
+}
+
+.advanced-box .optimizer-controls {
+  border-top: 1px solid var(--line);
+  padding: 12px;
 }
 
 .field,
@@ -550,8 +643,46 @@ h1 {
   padding: 0 17px 17px;
 }
 
+.route-finder-card .path-list {
+  padding-top: 14px;
+}
+
+.route-freshness {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid rgba(119, 213, 220, 0.2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: rgba(119, 213, 220, 0.05);
+}
+
+.route-freshness strong {
+  font-size: 13px;
+}
+
+.route-freshness span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.route-empty {
+  display: grid;
+  gap: 6px;
+}
+
+.route-empty strong {
+  color: var(--text);
+}
+
+.route-empty span {
+  color: var(--muted);
+  line-height: 1.4;
+}
+
 .path-card {
-  padding: 12px;
+  padding: 13px;
 }
 
 .path-card.best {
@@ -559,28 +690,68 @@ h1 {
   background: linear-gradient(180deg, rgba(123, 216, 143, 0.08), var(--panel-2));
 }
 
-.path-title {
-  align-items: baseline;
+.path-card-head {
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.path-title strong {
-  font-size: 15px;
+.path-card-head > div {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
 }
 
-.path-title span,
+.path-card-head strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.16;
+  overflow-wrap: anywhere;
+}
+
+.path-card-head small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.path-card-head > span,
 .path-stats,
 .path-legs {
   color: var(--muted);
   font-size: 12px;
 }
 
-.path-route {
-  margin-top: 8px;
-  font-size: 13px;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+.route-steps {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.route-step-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.route-step {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: rgba(16, 17, 15, 0.46);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.route-arrow {
+  color: var(--subtle);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .path-stats {
@@ -590,9 +761,40 @@ h1 {
   margin-top: 8px;
 }
 
+.path-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+.path-metrics .metric {
+  min-height: 86px;
+}
+
+.path-metrics .metric strong {
+  font-size: 14px;
+}
+
 .path-legs {
   margin-top: 8px;
   line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.path-legs-detail {
+  margin-top: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+
+.path-legs-detail summary {
+  color: var(--muted);
+}
+
+.path-legs-detail div {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
   overflow-wrap: anywhere;
 }
 
@@ -645,6 +847,9 @@ h1 {
   .route-grid,
   .work-grid,
   .legs-grid,
+  .route-finder-summary,
+  .guide-grid,
+  .path-metrics,
   .comparison-grid {
     grid-template-columns: 1fr;
   }
@@ -656,6 +861,11 @@ h1 {
   .app-header,
   .market-strip {
     flex-direction: column;
+  }
+
+  .route-freshness {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 
