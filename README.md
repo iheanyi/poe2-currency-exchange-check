@@ -45,15 +45,6 @@ The live desktop workflow uses POE2Scout and the trade-site exchange endpoint, n
 
 See [docs/api-and-caching.md](docs/api-and-caching.md) for the API/caching notes.
 
-## Security posture
-
-- Electron renderer uses `nodeIntegration: false`, `contextIsolation: true`, and `sandbox: true`.
-- Content Security Policy blocks remote scripts and unexpected embedding.
-- IPC handlers validate the renderer URL.
-- Navigation/new windows are blocked except for trusted external links opened in the system browser.
-- Dependency installation is through `npm`; committed lockfile is included for the app.
-- `npm audit --audit-level=low` is expected to pass for the current dependency set.
-
 ## License
 
 MIT. This project is not affiliated with or endorsed by Grinding Gear Games.

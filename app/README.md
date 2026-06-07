@@ -72,12 +72,3 @@ The desktop app can search for better trade paths:
 - Result cards also show rough liquidity hints from snapshot volume/stock.
 
 The exported `.xlsx` is intentionally a static snapshot. A native Google Sheets copy can be made live with the companion Apps Script refresh action, which repopulates `Currencies` and `Pairs` in the same column shape.
-
-## Security posture
-
-- `npm audit` currently reports 0 vulnerabilities.
-- The renderer runs with `nodeIntegration: false`, `contextIsolation: true`, and `sandbox: true`.
-- A restrictive Content Security Policy is set in `index.html`.
-- Permission prompts and webviews are denied.
-- IPC handlers reject calls from unexpected renderer URLs.
-- Unexpected navigation and new windows are blocked unless they target trusted `pathofexile.com` or `poe2scout.com` hosts through the system browser.
