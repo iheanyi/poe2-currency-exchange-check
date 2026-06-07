@@ -1,0 +1,14 @@
+{
+  "name": "poe2-currency-arb",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Electron calculator for comparing any PoE2 currency route against a bridge route.",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check src/main.js && node --check src/preload.js && node --check src/renderer.js"
+  },
+  "devDependencies": {
+    "electron": "^42.3.3"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "poe2-currency-exchange-check",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Desktop and Google Sheets tools for comparing Path of Exile 2 currency exchange routes.",
+  "license": "MIT",
+  "scripts": {
+    "app:start": "npm --prefix app start",
+    "app:check": "npm --prefix app run check",
+    "sheets:check": "node scripts/check-apps-script.mjs spreadsheet/google-sheets-refresh.gs",
+    "check": "npm run app:check && npm run sheets:check"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
